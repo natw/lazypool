@@ -11,17 +11,29 @@ redis.rpush("foo", 3)
 redis.rpush("foo", 4)
 redis.rpush("foo", 5)
 
-def msgs():
+def infinite():
     while 1:
         p("POPPING")
         yield redis.blpop("foo")
 
+def finite():
+    for i in range(10):
+        yield i
+
+
 def work(num):
     p("WORKING in thread {0}".format(threading.current_thread()))
     p(num)
+    return "did work"
 
 pool = LazyThreadPoolExecutor(4)
-pool.map(work, msgs())
+results = pool.map(work, finite())
 
-import time
-time.sleep(10)
+for r in results:
+    print "hi"
+    print r
+
+# import time
+# time.sleep(10)
+
+print "done"
