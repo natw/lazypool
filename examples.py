@@ -1,37 +1,37 @@
-from redis import StrictRedis
-from lazypool import LazyThreadPoolExecutor
-from lazypool.executors import p
+import itertools
 import threading
 
-redis = StrictRedis()
+from lazypool import LazyThreadPoolExecutor
 
-redis.rpush("foo", 1)
-redis.rpush("foo", 2)
-redis.rpush("foo", 3)
 
-def infinite():
-    while 1:
-        p("POPPING")
-        yield redis.blpop("foo")
+print_lock = threading.Lock()
+def p(x):
+    with print_lock:
+        print x
 
-def finite():
-    for i in range(10):
-        yield i
-
+finite = range(5)
+infinite = itertools.count(0)
 
 def work(num):
     p("WORKING in thread {0}".format(threading.current_thread()))
     p(num)
     return "a result"
 
+
 pool = LazyThreadPoolExecutor(4)
-# results = pool.map(work, finite())
-results = pool.map(work, infinite())
+results = pool.map(work, finite)
 
-for r in results:
-    print r
+p("iterate over finite results")
+p(list(results))
 
-# import time
-# time.sleep(10)
+
+results = pool.map(work, infinite)
+
+p("iterate over infinite results")
+for i, r in enumerate(results):
+    p(r)
+    if i > 10:
+        p("you get the idea...")
+        break
 
 print "done"

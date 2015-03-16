@@ -2,11 +2,6 @@ import threading
 from Queue import Queue
 
 
-print_lock = threading.Lock()
-def p(x):
-    with print_lock:
-        print x
-
 ONE_YEAR = 365 * 24 * 60 * 60
 
 THREAD_DONE = object()
@@ -48,9 +43,6 @@ class LazyThreadPoolExecutor(object):
             if result is not THREAD_DONE:
                 yield result
             else:
-                p("GOT IT")
-                p(self.thread_sem._Semaphore__value)
-                p(self.num_workers)
                 # if all threads have exited
                 if self.thread_sem._Semaphore__value == self.num_workers:
                     break
