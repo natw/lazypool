@@ -30,8 +30,10 @@ results = pool.map(work, infinite)
 p("iterate over infinite results")
 for i, r in enumerate(results):
     p(r)
-    if i > 10:
+    if i > 3:
         p("you get the idea...")
         break
+
+pool.shutdown()
 
 print "done"

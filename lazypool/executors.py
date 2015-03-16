@@ -11,25 +11,39 @@ class LazyThreadPoolExecutor(object):
     def __init__(self, num_workers=1):
         self.num_workers = num_workers
         self.result_queue = Queue()
-        # is "reverse semaphore" a thing?
         self.thread_sem = threading.Semaphore(num_workers)
+        self._shutdown = threading.Event()
+        self.threads = []
 
     def map(self, predicate, iterable):
+        self._shutdown.clear()
         self.iterable = ThreadSafeIterator(iterable)
+        self._start_threads(predicate)
+        return self._result_iterator()
+
+    def shutdown(self, wait=True):
+        self._shutdown.set()
+        if wait:
+            for t in self.threads:
+                t.join()
+
+    def _start_threads(self, predicate):
         for i in range(self.num_workers):
             t = threading.Thread(
                 name="LazyChild #{0}".format(i),
                 target=self._make_worker(predicate)
             )
             t.daemon = True
+            self.threads.append(t)
             t.start()
-        return self._result_iterator()
 
     def _make_worker(self, predicate):
         def _w():
             with self.thread_sem:
                 for thing in self.iterable:
                     self.result_queue.put(predicate(thing))
+                    if self._shutdown.is_set():
+                        break
             self.result_queue.put(THREAD_DONE)
         return _w
 
@@ -44,6 +58,7 @@ class LazyThreadPoolExecutor(object):
                 yield result
             else:
                 # if all threads have exited
+                # sorry, this is kind of a gross way to use semaphores
                 if self.thread_sem._Semaphore__value == self.num_workers:
                     break
                 else:
