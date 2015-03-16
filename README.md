@@ -28,7 +28,7 @@ stream = itertool.count(0)
 def work(num):
   return num + 1
 
-pool = LazyThreadExecutor(4) # 4 threads
+pool = LazyThreadPoolExecutor(4) # 4 threads
 results = pool.map(work, stream)
 
 # work has begun
