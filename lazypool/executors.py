@@ -1,6 +1,7 @@
 import threading
 from Queue import Queue
 
+
 print_lock = threading.Lock()
 def p(x):
     with print_lock:
@@ -8,10 +9,15 @@ def p(x):
 
 ONE_YEAR = 365 * 24 * 60 * 60
 
+THREAD_DONE = object()
+
+
 class LazyThreadPoolExecutor(object):
     def __init__(self, num_workers=1):
         self.num_workers = num_workers
         self.result_queue = Queue()
+        # is "reverse semaphore" a thing?
+        self.thread_sem = threading.Semaphore(num_workers)
 
     def map(self, predicate, iterable):
         self.iterable = ThreadSafeIterator(iterable)
@@ -26,9 +32,10 @@ class LazyThreadPoolExecutor(object):
 
     def _make_worker(self, predicate):
         def _w():
-            p("the worker: %s" % threading.current_thread())
-            for thing in self.iterable:
-                self.result_queue.put(predicate(thing))
+            with self.thread_sem:
+                for thing in self.iterable:
+                    self.result_queue.put(predicate(thing))
+            self.result_queue.put(THREAD_DONE)
         return _w
 
     def _result_iterator(self):
@@ -37,7 +44,19 @@ class LazyThreadPoolExecutor(object):
             # timeout.
             # Hopefully one year is long enough...
             # See http://bugs.python.org/issue1360
-            yield self.result_queue.get(True, ONE_YEAR)
+            result = self.result_queue.get(True, ONE_YEAR)
+            if result is not THREAD_DONE:
+                yield result
+            else:
+                p("GOT IT")
+                p(self.thread_sem._Semaphore__value)
+                p(self.num_workers)
+                # if all threads have exited
+                if self.thread_sem._Semaphore__value == self.num_workers:
+                    break
+                else:
+                    continue
+
 
 
 class ThreadSafeIterator(object):

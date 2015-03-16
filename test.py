@@ -8,8 +8,6 @@ redis = StrictRedis()
 redis.rpush("foo", 1)
 redis.rpush("foo", 2)
 redis.rpush("foo", 3)
-redis.rpush("foo", 4)
-redis.rpush("foo", 5)
 
 def infinite():
     while 1:
@@ -24,13 +22,13 @@ def finite():
 def work(num):
     p("WORKING in thread {0}".format(threading.current_thread()))
     p(num)
-    return "did work"
+    return "a result"
 
 pool = LazyThreadPoolExecutor(4)
-results = pool.map(work, finite())
+# results = pool.map(work, finite())
+results = pool.map(work, infinite())
 
 for r in results:
-    print "hi"
     print r
 
 # import time
