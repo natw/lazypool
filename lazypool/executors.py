@@ -61,7 +61,7 @@ class LazyThreadPoolExecutor(object):
 
 class ThreadSafeIterator(object):
     def __init__(self, it):
-        self._it = it
+        self._it = iter(it)
         self.lock = threading.Lock()
 
     def __iter__(self):
