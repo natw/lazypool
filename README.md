@@ -23,7 +23,7 @@ In terms of actually doing work, it's actually very not-lazy, and will start del
 import itertools
 from lazypool import LazyThreadPoolExecutor
 
-stream = itertool.count(0)
+stream = itertools.count(0)
 
 def work(num):
   return num + 1
